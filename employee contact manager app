@@ -1,0 +1,230 @@
+xml code
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:text="Employee Contact Manager"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+    <EditText
+        android:id="@+id/etName"
+        android:hint="Name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+    <EditText
+        android:id="@+id/etId"
+        android:hint="ID"
+        android:inputType="number"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+    <EditText
+        android:id="@+id/etPhone"
+        android:hint="Phone"
+        android:inputType="phone"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+    <Spinner
+        android:id="@+id/spDepartment"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+    <Button
+        android:id="@+id/btnSave"
+        android:text="Save"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"/>
+
+    <GridView
+        android:id="@+id/gridView"
+        android:numColumns="2"
+        android:verticalSpacing="10dp"
+        android:horizontalSpacing="10dp"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"/>
+
+</LinearLayout>
+
+
+java code
+package com.example.n3;
+
+import android.app.AlertDialog;
+import android.content.Intent;
+import android.net.Uri;
+import android.os.Bundle;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.*;
+import androidx.appcompat.app.AppCompatActivity;
+import java.util.ArrayList;
+
+public class MainActivity extends AppCompatActivity {
+
+    EditText etName, etId, etPhone;
+    Spinner spDepartment;
+    GridView gridView;
+
+    ArrayList<Employee> employeeList;
+    EmployeeAdapter adapter;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        etName = findViewById(R.id.etName);
+        etId = findViewById(R.id.etId);
+        etPhone = findViewById(R.id.etPhone);
+        spDepartment = findViewById(R.id.spDepartment);
+        gridView = findViewById(R.id.gridView);
+        Button btnSave = findViewById(R.id.btnSave);
+
+        // Spinner data
+        String[] dept = {"Sales", "HR", "Marketing", "IT"};
+        ArrayAdapter<String> spinAdapter =
+                new ArrayAdapter<>(this,
+                        android.R.layout.simple_spinner_dropdown_item, dept);
+        spDepartment.setAdapter(spinAdapter);
+
+        // List setup
+        employeeList = new ArrayList<>();
+        adapter = new EmployeeAdapter();
+        gridView.setAdapter(adapter);
+
+        // Save
+        btnSave.setOnClickListener(v -> {
+            String name = etName.getText().toString();
+            String id = etId.getText().toString();
+            String phone = etPhone.getText().toString();
+            String deptSel = spDepartment.getSelectedItem().toString();
+
+            employeeList.add(new Employee(name, id, phone, deptSel));
+            adapter.notifyDataSetChanged();
+
+            etName.setText("");
+            etId.setText("");
+            etPhone.setText("");
+        });
+    }
+
+    // =========================
+    // Employee Model
+    // =========================
+    class Employee {
+        String name, id, phone, dept;
+
+        Employee(String n, String i, String p, String d) {
+            name = n;
+            id = i;
+            phone = p;
+            dept = d;
+        }
+    }
+
+    // =========================
+    // Grid Adapter
+    // =========================
+    class EmployeeAdapter extends BaseAdapter {
+
+        @Override
+        public int getCount() {
+            return employeeList.size();
+        }
+
+        @Override
+        public Object getItem(int position) {
+            return employeeList.get(position);
+        }
+
+        @Override
+        public long getItemId(int position) {
+            return position;
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+
+            LinearLayout card = new LinearLayout(MainActivity.this);
+            card.setOrientation(LinearLayout.VERTICAL);
+            card.setPadding(16,16,16,16);
+            card.setBackgroundResource(android.R.drawable.dialog_holo_light_frame);
+
+            Employee emp = employeeList.get(position);
+
+            TextView tv = new TextView(MainActivity.this);
+            tv.setText(emp.name + "\nID: " + emp.id +
+                    "\nDept: " + emp.dept);
+
+            Button btnCall = new Button(MainActivity.this);
+            btnCall.setText("Call Employee");
+
+            Button btnSMS = new Button(MainActivity.this);
+            btnSMS.setText("Send SMS");
+
+            Button btnEmail = new Button(MainActivity.this);
+            btnEmail.setText("Send Email");
+
+            card.addView(tv);
+            card.addView(btnCall);
+            card.addView(btnSMS);
+            card.addView(btnEmail);
+
+            // Call
+            btnCall.setOnClickListener(v ->
+                    showConfirm("call", emp.phone));
+
+            // SMS
+            btnSMS.setOnClickListener(v ->
+                    showConfirm("sms", emp.phone));
+
+            // Email
+            btnEmail.setOnClickListener(v -> {
+                Intent intent = new Intent(Intent.ACTION_SENDTO);
+                intent.setData(Uri.parse("mailto:employee@gmail.com"));
+                startActivity(intent);
+            });
+
+            return card;
+        }
+    }
+
+    // =========================
+    // Confirmation Dialog
+    // =========================
+    private void showConfirm(String type, String phone) {
+        new AlertDialog.Builder(this)
+                .setTitle("Confirm")
+                .setMessage("Do you want to proceed?")
+                .setPositiveButton("Yes", (d, w) -> {
+
+                    if (type.equals("call")) {
+                        startActivity(new Intent(Intent.ACTION_DIAL,
+                                Uri.parse("tel:" + phone)));
+                    } else {
+                        startActivity(new Intent(Intent.ACTION_VIEW,
+                                Uri.parse("sms:" + phone)));
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+}
+
+
+
+
+
+
