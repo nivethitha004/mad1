@@ -1,0 +1,219 @@
+xml code
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:padding="16dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:id="@+id/tvDetails"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:paddingTop="10dp"/>
+
+        <!-- Amount -->
+        <EditText
+            android:id="@+id/etAmount"
+            android:hint="Enter Amount"
+            android:inputType="numberDecimal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
+        <!-- Description -->
+        <EditText
+            android:id="@+id/etDescription"
+            android:hint="Enter Description"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
+        <!-- Category Spinner -->
+        <Spinner
+            android:id="@+id/spCategory"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
+        <!-- Payment Mode -->
+        <RadioGroup
+            android:id="@+id/radioGroupPayment"
+            android:orientation="horizontal"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <RadioButton
+                android:id="@+id/rbCash"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Cash"/>
+
+            <RadioButton
+                android:id="@+id/rbOnline"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Online"/>
+        </RadioGroup>
+
+        <!-- Add Expense -->
+        <Button
+            android:id="@+id/btnAdd"
+            android:text="Add Expense"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
+        <!-- List -->
+        <TextView
+            android:text="Expense List:"
+            android:textStyle="bold"
+            android:paddingTop="8dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
+        <ListView
+            android:id="@+id/listView"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"/>
+
+        <!-- Action Buttons -->
+        <Button
+            android:id="@+id/btnCall"
+            android:text="Call Accountant"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
+        <Button
+            android:id="@+id/btnSMS"
+            android:text="Send SMS"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
+        <Button
+            android:id="@+id/btnEmail"
+            android:text="Send Email"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
+    </LinearLayout>
+
+java code
+
+
+package com.example.n2;
+
+import android.app.AlertDialog;
+import android.content.Intent;
+import android.net.Uri;
+import android.os.Bundle;
+import android.widget.*;
+import androidx.appcompat.app.AppCompatActivity;
+import java.util.ArrayList;
+
+public class MainActivity extends AppCompatActivity {
+
+    EditText etAmount, etDescription;
+    Spinner spCategory;
+    RadioGroup radioGroupPayment;
+    ListView listView;
+
+    ArrayList<String> expenseList;
+    ArrayAdapter<String> listAdapter;
+
+    String accountantPhone = "9876543210";
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        etAmount = findViewById(R.id.etAmount);
+        etDescription = findViewById(R.id.etDescription);
+        spCategory = findViewById(R.id.spCategory);
+        radioGroupPayment = findViewById(R.id.radioGroupPayment);
+        listView = findViewById(R.id.listView);
+
+        Button btnAdd = findViewById(R.id.btnAdd);
+        Button btnCall = findViewById(R.id.btnCall);
+        Button btnSMS = findViewById(R.id.btnSMS);
+        Button btnEmail = findViewById(R.id.btnEmail);
+
+        // Spinner data
+        String[] categories = {
+                "Office Supplies",
+                "Travel / Taxi",
+                "Client Meeting",
+                "Printing / Xerox",
+                "Internet / Phone Bill"
+        };
+
+        ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(
+                this, android.R.layout.simple_spinner_dropdown_item, categories);
+        spCategory.setAdapter(spinnerAdapter);
+
+        // List setup
+        expenseList = new ArrayList<>();
+        listAdapter = new ArrayAdapter<>(
+                this, android.R.layout.simple_list_item_1, expenseList);
+        listView.setAdapter(listAdapter);
+
+        // Add expense
+        btnAdd.setOnClickListener(v -> {
+            String amount = etAmount.getText().toString();
+            String desc = etDescription.getText().toString();
+            String category = spCategory.getSelectedItem().toString();
+
+            int id = radioGroupPayment.getCheckedRadioButtonId();
+            RadioButton rb = findViewById(id);
+            String payment = rb != null ? rb.getText().toString() : "";
+
+            String record = desc + " - $" + amount + " (" + category + ", " + payment + ")";
+            expenseList.add(record);
+            listAdapter.notifyDataSetChanged();
+
+            etAmount.setText("");
+            etDescription.setText("");
+        });
+
+        // Call
+        btnCall.setOnClickListener(v -> showConfirm("call"));
+
+        // SMS
+        btnSMS.setOnClickListener(v -> showConfirm("sms"));
+
+        // Email
+        btnEmail.setOnClickListener(v -> {
+            Intent emailIntent = new Intent(Intent.ACTION_SENDTO);
+            emailIntent.setData(Uri.parse("mailto:accountant@gmail.com"));
+            emailIntent.putExtra(Intent.EXTRA_SUBJECT, "Daily Expense Report");
+            startActivity(emailIntent);
+        });
+    }
+
+    private void showConfirm(String type) {
+        new AlertDialog.Builder(this)
+                .setTitle("Confirm")
+                .setMessage("Do you want to proceed?")
+                .setPositiveButton("Yes", (d, w) -> {
+                    if (type.equals("call")) {
+                        startActivity(new Intent(Intent.ACTION_DIAL,
+                                Uri.parse("tel:" + accountantPhone)));
+                    } else {
+                        startActivity(new Intent(Intent.ACTION_VIEW,
+                                Uri.parse("sms:" + accountantPhone)));
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+}
+
+
+
+
+
+
+</ScrollView>
