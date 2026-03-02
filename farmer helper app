@@ -1,0 +1,205 @@
+xml code
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:padding="16dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:text="Farmer Helper App"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingBottom="10dp"/>
+
+        <!-- Crop Spinner -->
+        <Spinner
+            android:id="@+id/spCrop"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:spinnerMode="dropdown"/>
+
+        <!-- Soil Spinner -->
+        <Spinner
+            android:id="@+id/spSoil"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:spinnerMode="dropdown"/>
+
+        <!-- Season Spinner -->
+        <Spinner
+            android:id="@+id/spSeason"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:spinnerMode="dropdown"/>
+
+        <!-- Tips Title -->
+        <TextView
+            android:text="Farming Tips"
+            android:textStyle="bold"
+            android:textSize="18sp"
+            android:paddingTop="12dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
+        <!-- Tips Text -->
+        <TextView
+            android:id="@+id/tvTips"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Tips will appear here"
+            android:padding="8dp"/>
+
+        <!-- Buttons -->
+        <Button
+            android:id="@+id/btnCall"
+            android:text="Call Officer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"/>
+
+        <Button
+            android:id="@+id/btnSMS"
+            android:text="Send SMS"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
+        <Button
+            android:id="@+id/btnEmail"
+            android:text="Send Email"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
+    </LinearLayout>
+
+java code
+
+package com.example.n4;
+
+import android.app.AlertDialog;
+import android.content.Intent;
+import android.net.Uri;
+import android.os.Bundle;
+import android.widget.*;
+import androidx.appcompat.app.AppCompatActivity;
+
+public class MainActivity extends AppCompatActivity {
+
+    Spinner spCrop, spSoil, spSeason;
+    TextView tvTips;
+
+    String officerPhone = "9876543210";
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        spCrop = findViewById(R.id.spCrop);
+        spSoil = findViewById(R.id.spSoil);
+        spSeason = findViewById(R.id.spSeason);
+        tvTips = findViewById(R.id.tvTips);
+
+        Button btnCall = findViewById(R.id.btnCall);
+        Button btnSMS = findViewById(R.id.btnSMS);
+        Button btnEmail = findViewById(R.id.btnEmail);
+
+        // Spinner data
+        String[] crops = {"Rice", "Wheat", "Maize"};
+        String[] soils = {"Loamy", "Clay", "Sandy"};
+        String[] seasons = {"Monsoon", "Winter", "Summer"};
+
+        spCrop.setAdapter(new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_dropdown_item, crops));
+
+        spSoil.setAdapter(new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_dropdown_item, soils));
+
+        spSeason.setAdapter(new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_dropdown_item, seasons));
+
+        // Show tips when selection changes
+        AdapterView.OnItemSelectedListener listener =
+                new AdapterView.OnItemSelectedListener() {
+                    @Override
+                    public void onItemSelected(AdapterView<?> parent, android.view.View view, int position, long id) {
+                        showTips();
+                    }
+
+                    @Override
+                    public void onNothingSelected(AdapterView<?> parent) { }
+                };
+
+        spCrop.setOnItemSelectedListener(listener);
+        spSoil.setOnItemSelectedListener(listener);
+        spSeason.setOnItemSelectedListener(listener);
+
+        // Call
+        btnCall.setOnClickListener(v -> showConfirm("call"));
+
+        // SMS
+        btnSMS.setOnClickListener(v -> showConfirm("sms"));
+
+        // Email
+        btnEmail.setOnClickListener(v -> {
+            Intent intent = new Intent(Intent.ACTION_SENDTO);
+            intent.setData(Uri.parse("mailto:agri_officer@gmail.com"));
+            intent.putExtra(Intent.EXTRA_SUBJECT, "Farming Help");
+            startActivity(intent);
+        });
+    }
+
+    private void showTips() {
+        String crop = spCrop.getSelectedItem().toString();
+
+        if (crop.equals("Rice")) {
+            tvTips.setText(
+                    "• Use high-yielding rice varieties like IR64.\n" +
+                            "• Maintain proper water level.\n" +
+                            "• Apply balanced fertilizers.");
+        } else if (crop.equals("Wheat")) {
+            tvTips.setText(
+                    "• Use certified wheat seeds.\n" +
+                            "• Irrigate at critical stages.\n" +
+                            "• Control weeds early.");
+        } else {
+            tvTips.setText(
+                    "• Select quality seeds.\n" +
+                            "• Maintain soil nutrients.\n" +
+                            "• Monitor pests regularly.");
+        }
+    }
+
+    private void showConfirm(String type) {
+        new AlertDialog.Builder(this)
+                .setTitle("Confirm Call")
+                .setMessage("Do you want to contact the agricultural officer?")
+                .setPositiveButton("Yes", (d, w) -> {
+
+                    if (type.equals("call")) {
+                        startActivity(new Intent(Intent.ACTION_DIAL,
+                                Uri.parse("tel:" + officerPhone)));
+                    } else {
+                        startActivity(new Intent(Intent.ACTION_VIEW,
+                                Uri.parse("sms:" + officerPhone)));
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+}
+
+
+
+
+
+</ScrollView>
